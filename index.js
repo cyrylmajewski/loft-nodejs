@@ -5,7 +5,6 @@ const readdir = util.promisify(fs.readdir);
 
 const directory = process.argv[2];
 const resultDir = process.argv[3];
-const deleteFlag = process.argv.find(arg => arg === '-d') === '-d' ? true : false;
 
 if(!directory) {
   console.error('Enter name of your directory');
@@ -21,15 +20,14 @@ if(!fs.existsSync(resultDir)) {
   fs.mkdirSync(resultDir);
 }
 
-const checkFolder = async (directory, resultDir, deleteFlag) => {
+const checkFolder = async (directory, resultDir) => {
+  const files = await readdir(directory);
 
-  try {
-    const files = await readdir(directory);
-
+  return new Promise((resolve, reject) => {
     files.forEach(async file => {
       const localPath = path.join(directory, file);
       const state = fs.statSync(localPath);
-
+  
       if(state.isDirectory()) {
         checkFolder(localPath, resultDir, deleteFlag);
       } else {
@@ -39,28 +37,30 @@ const checkFolder = async (directory, resultDir, deleteFlag) => {
   
         const oldPath = path.join(directory, file);
         let newPath = path.join(resultDir, letter);
-        console.log(newPath);
-
+  
         if(!fs.existsSync(newPath)) {
           fs.mkdirSync(newPath);
         }
-
+  
         const filePath = path.join(newPath, file);
-
+  
         fs.rename(oldPath, filePath, function(err) {
-          if(err) {
-            throw err;
-          }
+          if (err) reject('Reject');
+
+          resolve('Done');
         });
+
         
       }
     });
-    
-    
-  } catch(e) {
-    throw new Error (e);
-  }
+  });
 };
 
+checkFolder(directory, resultDir)
+  .then((value) => {
+    console.log(value);
+  })
+  .catch((e) => {
+    throw new Error (e);
+  });
 
-checkFolder(directory, resultDir, deleteFlag);
