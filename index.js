@@ -1,16 +1,14 @@
 const path = require('path');
 const fs = require('fs');
-const async = require('async');
 
 // eslint-disable-next-line no-undef
 const directory = process.argv[2];
+const resultDir = process.argv[3];
 
 if(!directory) {
   console.error('Enter name of your directory');
   return;
 }
-
-const resultDir = 'result';
 
 const checkExisting = (pathString) => {
   fs.exists(pathString, (exists) => {
@@ -19,7 +17,6 @@ const checkExisting = (pathString) => {
         if(err) {
           throw err;
         }
-        console.log('Directory created');
       });
     }
   });
@@ -55,24 +52,16 @@ const checkFolder = (directory) => {
                     if(err) {
                       throw err;
                     }
-
-                    newPath = path.join(newPath, file);
-
-                    fs.rename(oldPath, newPath, function(err) {
-                      if(err) {
-                        throw err;
-                      }
-                    });
                   });
-                } else {
-                  newPath = path.join(newPath, file);
+                } 
 
-                  fs.rename(oldPath, newPath, function(err) {
-                    if(err) {
-                      throw err;
-                    }
-                  });
-                }
+                const filePath = path.join(newPath, file);
+
+                fs.rename(oldPath, filePath, function(err) {
+                  if(err) {
+                    throw err;
+                  }
+                });
               });
               
             }
