@@ -1,77 +1,66 @@
 const path = require('path');
 const fs = require('fs');
+const util = require('util');
+const readdir = util.promisify(fs.readdir);
 
-// eslint-disable-next-line no-undef
 const directory = process.argv[2];
 const resultDir = process.argv[3];
+const deleteFlag = process.argv.find(arg => arg === '-d') === '-d' ? true : false;
 
 if(!directory) {
   console.error('Enter name of your directory');
   return;
 }
 
-const checkExisting = (pathString) => {
-  fs.exists(pathString, (exists) => {
-    if(!exists) {
-      fs.mkdir(pathString, (err) => {
-        if(err) {
-          throw err;
+if(!resultDir) {
+  console.error('Enter name of your result directory');
+  return;
+}
+
+if(!fs.existsSync(resultDir)) {
+  fs.mkdirSync(resultDir);
+}
+
+const checkFolder = async (directory, resultDir, deleteFlag) => {
+
+  try {
+    const files = await readdir(directory);
+
+    files.forEach(async file => {
+      const localPath = path.join(directory, file);
+      const state = fs.statSync(localPath);
+
+      if(state.isDirectory()) {
+        checkFolder(localPath, resultDir, deleteFlag);
+      } else {
+        const ext = path.extname(file);
+        const name = path.basename(localPath, ext);
+        const letter = name.substring(0, 1);
+  
+        const oldPath = path.join(directory, file);
+        let newPath = path.join(resultDir, letter);
+        console.log(newPath);
+
+        if(!fs.existsSync(newPath)) {
+          fs.mkdirSync(newPath);
         }
-      });
-    }
-  });
-};
 
-checkExisting(resultDir);
+        const filePath = path.join(newPath, file);
 
-const checkFolder = (directory) => {
-
-  fs.readdir(directory, (err, files) => {
-    if(err) {
-      throw new err;
-    } else {
-      files.forEach(file => {
-        const localPath = path.join(directory, file);
-        fs.stat(localPath, (err, state) => {
+        fs.rename(oldPath, filePath, function(err) {
           if(err) {
             throw err;
-          } else {
-            if(state.isDirectory()) {
-              checkFolder(localPath);
-            } else {
-              const ext = path.extname(file);
-              const name = path.basename(localPath, ext);
-              const letter = name.substring(0, 1);
-        
-              const oldPath = path.join(directory, file);
-              let newPath = path.join(resultDir, letter);
-              
-              fs.exists(newPath, (exists) => {
-                if(!exists) {
-                  fs.mkdir(newPath, (err) => {
-                    if(err) {
-                      throw err;
-                    }
-                  });
-                } 
-
-                const filePath = path.join(newPath, file);
-
-                fs.rename(oldPath, filePath, function(err) {
-                  if(err) {
-                    throw err;
-                  }
-                });
-              });
-              
-            }
           }
         });
-      
-      });
-    }
-  });
+        
+      }
+    });
+    
+    
+  } catch(e) {
+    throw new Error (e);
+  }
 };
 
 
-checkFolder(directory);
+checkFolder(directory, resultDir, deleteFlag);
