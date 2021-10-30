@@ -29,7 +29,7 @@ const checkFolder = async (directory, resultDir) => {
       const state = fs.statSync(localPath);
   
       if(state.isDirectory()) {
-        checkFolder(localPath, resultDir, deleteFlag);
+        checkFolder(localPath, resultDir);
       } else {
         const ext = path.extname(file);
         const name = path.basename(localPath, ext);
@@ -45,7 +45,7 @@ const checkFolder = async (directory, resultDir) => {
         const filePath = path.join(newPath, file);
   
         fs.rename(oldPath, filePath, function(err) {
-          if (err) reject('Reject');
+          if (err) reject(err);
 
           resolve('Done');
         });
@@ -59,8 +59,5 @@ const checkFolder = async (directory, resultDir) => {
 checkFolder(directory, resultDir)
   .then((value) => {
     console.log(value);
-  })
-  .catch((e) => {
-    throw new Error (e);
   });
 
